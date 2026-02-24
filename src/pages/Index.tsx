@@ -3,13 +3,16 @@ import { ImageUploader } from "@/components/MedicineScanner/ImageUploader";
 import { MedicineResults } from "@/components/MedicineScanner/MedicineResults";
 import { LoadingState } from "@/components/MedicineScanner/LoadingState";
 import { QuickTips } from "@/components/MedicineScanner/QuickTips";
+import { LanguageSelector } from "@/components/MedicineScanner/LanguageSelector";
 import { useMedicineAnalysis } from "@/hooks/useMedicineAnalysis";
+import { useState } from "react";
 
 const Index = () => {
   const { isAnalyzing, medicineInfo, analyzeMedicine, reset } = useMedicineAnalysis();
+  const [selectedLanguage, setSelectedLanguage] = useState("English");
 
   const handleImageCapture = (base64Image: string) => {
-    analyzeMedicine(base64Image);
+    analyzeMedicine(base64Image, selectedLanguage);
   };
 
   const handleScanAnother = () => {
@@ -54,11 +57,18 @@ const Index = () => {
               </p>
             </div>
 
-            {/* Image Uploader */}
-            <ImageUploader
-              onImageCapture={handleImageCapture}
-              isAnalyzing={isAnalyzing}
-            />
+            {/* Language Selection & Image Uploader */}
+            <div className="space-y-4">
+              <LanguageSelector
+                selectedLanguage={selectedLanguage}
+                onLanguageChange={setSelectedLanguage}
+                disabled={isAnalyzing}
+              />
+              <ImageUploader
+                onImageCapture={handleImageCapture}
+                isAnalyzing={isAnalyzing}
+              />
+            </div>
 
             {/* Quick Tips */}
             <QuickTips />

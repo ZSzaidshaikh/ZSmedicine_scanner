@@ -18,7 +18,7 @@ export function useMedicineAnalysis() {
   const [medicineInfo, setMedicineInfo] = useState<MedicineInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const analyzeMedicine = async (base64Image: string) => {
+  const analyzeMedicine = async (base64Image: string, language: string = "English") => {
     setIsAnalyzing(true);
     setError(null);
 
@@ -43,6 +43,7 @@ export function useMedicineAnalysis() {
       : base64Image;
 
     const prompt = `You are a medical information assistant. Analyze the medicine shown in this image and provide detailed information in a structured JSON format.
+IMPORTANT: The values of the JSON object MUST be in ${language} language.
 
 Provide the following information:
 1. name: The medicine name (generic and brand name if visible)
@@ -68,10 +69,10 @@ IMPORTANT: Respond ONLY with a valid JSON object in this exact format, no other 
   "warnings": "Important warnings"
 }
 
-If you cannot identify the medicine clearly, provide your best assessment based on what's visible, or indicate that the image is unclear.`;
+If you cannot identify the medicine clearly, provide your best assessment based on what's visible, or indicate that the image is unclear. All values must be in ${language}.`;
 
     try {
-      console.log("Calling Fireworks API for medicine analysis...");
+      console.log(`Calling Fireworks API for medicine analysis in ${language}...`);
 
       const response = await fetch("https://api.fireworks.ai/inference/v1/chat/completions", {
         method: "POST",
@@ -80,7 +81,7 @@ If you cannot identify the medicine clearly, provide your best assessment based 
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "accounts/fireworks/models/qwen3-vl-30b-a3b-thinking",
+          model: "accounts/fireworks/models/qwen3-vl-30b-a3b-instruct",
           messages: [
             {
               role: "user",
