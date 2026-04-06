@@ -74,6 +74,13 @@ export function ImageUploader({ onImageCapture, isAnalyzing }: ImageUploaderProp
     setIsCameraOpen(false);
   };
 
+  const handleSystemCameraFallback = useCallback(() => {
+    const input = cameraInputRef.current;
+    if (!input) return;
+    input.value = "";
+    input.click();
+  }, []);
+
   return (
     <div className="space-y-6">
       {!preview ? (
@@ -168,6 +175,7 @@ export function ImageUploader({ onImageCapture, isAnalyzing }: ImageUploaderProp
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         onCapture={handleCameraCapture}
+        onFallback={handleSystemCameraFallback}
       />
     </div>
   );

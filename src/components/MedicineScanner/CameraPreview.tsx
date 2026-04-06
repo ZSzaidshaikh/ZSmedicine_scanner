@@ -14,9 +14,10 @@ interface CameraPreviewProps {
   isOpen: boolean;
   onClose: () => void;
   onCapture: (image: string) => void;
+  onFallback?: () => void;
 }
 
-export function CameraPreview({ isOpen, onClose, onCapture }: CameraPreviewProps) {
+export function CameraPreview({ isOpen, onClose, onCapture, onFallback }: CameraPreviewProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -34,12 +35,25 @@ export function CameraPreview({ isOpen, onClose, onCapture }: CameraPreviewProps
   const startStream = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    
+    // Check if the browser supports mediaDevices
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      const isSecureContext = window.isSecureContext;
+      setError(
+        !isSecureContext 
+          ? "Camera requires a secure (HTTPS) connection. Please try 'Use System Camera'." 
+          : "Your browser doesn't support camera access. Please try 'Use System Camera'."
+      );
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const constraints = {
         video: {
           facingMode: facingMode,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
         },
       };
 
@@ -114,10 +128,24 @@ export function CameraPreview({ isOpen, onClose, onCapture }: CameraPreviewProps
           {error ? (
             <div className="text-center p-6 text-white space-y-4">
               <AlertCircle className="h-12 w-12 mx-auto text-destructive" />
-              <p>{error}</p>
-              <Button onClick={startStream} variant="outline" className="text-white border-white hover:bg-white/10">
-                Try Again
-              </Button>
+              <p className="text-sm opacity-90">{error}</p>
+              <div className="flex flex-col gap-3">
+                <Button onClick={startStream} variant="outline" className="text-white border-white hover:bg-white/10">
+                  Try Again
+                </Button>
+                {onFallback && (
+                  <Button 
+                    onClick={() => {
+                      onClose();
+                      onFallback();
+                    }} 
+                    variant="default" 
+                    className="bg-primary text-primary-foreground"
+                  >
+                    Use System Camera
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             <>
