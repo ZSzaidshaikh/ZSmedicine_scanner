@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { Camera, Upload, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { CameraPreview } from "./CameraPreview";
 
 interface ImageUploaderProps {
   onImageCapture: (base64Image: string) => void;
@@ -10,6 +11,7 @@ interface ImageUploaderProps {
 
 export function ImageUploader({ onImageCapture, isAnalyzing }: ImageUploaderProps) {
   const [preview, setPreview] = useState<string | null>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -33,14 +35,16 @@ export function ImageUploader({ onImageCapture, isAnalyzing }: ImageUploaderProp
   };
 
   const handleCameraClick = useCallback(() => {
-    const input = cameraInputRef.current;
-    if (!input) return;
-    // Reset value so onChange fires even if the same photo is taken again
-    input.value = "";
-    // Small delay to ensure the reset is processed before click on some mobile browsers
-    setTimeout(() => {
+    // Check if getUserMedia is supported
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      setIsCameraOpen(true);
+    } else {
+      // Fallback to standard input for older browsers or non-secure contexts
+      const input = cameraInputRef.current;
+      if (!input) return;
+      input.value = "";
       input.click();
-    }, 10);
+    }
   }, []);
 
   const handleGalleryClick = useCallback(() => {
@@ -63,6 +67,11 @@ export function ImageUploader({ onImageCapture, isAnalyzing }: ImageUploaderProp
     setPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (cameraInputRef.current) cameraInputRef.current.value = "";
+  };
+
+  const handleCameraCapture = (base64Image: string) => {
+    setPreview(base64Image);
+    setIsCameraOpen(false);
   };
 
   return (
@@ -107,7 +116,6 @@ export function ImageUploader({ onImageCapture, isAnalyzing }: ImageUploaderProp
             onChange={handleFileChange}
             aria-label="Take a photo with camera"
           />
-          {/* Gallery input - no capture attribute so it opens file picker / gallery */}
           <input
             ref={fileInputRef}
             type="file"
@@ -155,6 +163,12 @@ export function ImageUploader({ onImageCapture, isAnalyzing }: ImageUploaderProp
           </Button>
         </div>
       )}
+
+      <CameraPreview
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={handleCameraCapture}
+      />
     </div>
   );
 }
