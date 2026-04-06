@@ -52,26 +52,36 @@ export function CameraPreview({ isOpen, onClose, onCapture, onFallback }: Camera
       const constraints = {
         video: {
           facingMode: facingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
         },
       };
 
-      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+      // Timeout after 8 seconds if the camera API doesn't respond
+      const streamPromise = navigator.mediaDevices.getUserMedia(constraints);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Camera timed out")), 8000)
+      );
+
+      const newStream = (await Promise.race([streamPromise, timeoutPromise])) as MediaStream;
+      
       setStream(newStream);
       if (videoRef.current) {
         videoRef.current.srcObject = newStream;
+        // Explicitly trigger play to handle some mobile browser policies
+        try {
+          await videoRef.current.play();
+        } catch (e) {
+          console.warn("Auto-play failed, waiting for user interaction or metadata");
+        }
       }
     } catch (err) {
       console.error("Error accessing camera:", err);
       setError("Unable to access camera. Please check permissions.");
+      setIsLoading(false);
       toast({
         title: "Camera Error",
         description: "Please allow camera access to take photos of your medicine.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   }, [facingMode]);
 
@@ -154,6 +164,7 @@ export function CameraPreview({ isOpen, onClose, onCapture, onFallback }: Camera
                 autoPlay
                 playsInline
                 muted
+                onCanPlay={() => setIsLoading(false)}
                 className={cn(
                   "w-full h-full object-cover transition-opacity duration-300",
                   isLoading ? "opacity-0" : "opacity-100",
