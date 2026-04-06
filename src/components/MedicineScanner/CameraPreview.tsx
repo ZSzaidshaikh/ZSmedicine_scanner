@@ -52,6 +52,9 @@ export function CameraPreview({ isOpen, onClose, onCapture, onFallback }: Camera
       const constraints = {
         video: {
           facingMode: facingMode,
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          frameRate: { ideal: 30 },
         },
       };
 
@@ -167,6 +170,7 @@ export function CameraPreview({ isOpen, onClose, onCapture, onFallback }: Camera
                 onCanPlay={() => setIsLoading(false)}
                 className={cn(
                   "w-full h-full object-cover transition-opacity duration-300",
+                  "will-change-transform [transform:translateZ(0)]",
                   isLoading ? "opacity-0" : "opacity-100",
                   facingMode === "user" ? "-scale-x-100" : ""
                 )}
